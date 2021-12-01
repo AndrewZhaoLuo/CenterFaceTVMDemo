@@ -1,4 +1,3 @@
-import datetime
 from typing import Tuple
 
 import numpy as np
@@ -6,7 +5,6 @@ import onnxruntime as ort
 from PIL import Image, ImageDraw
 from tvm.driver import tvmc
 from tvm.driver.tvmc.model import TVMCPackage
-from tvm.relay.op.transform import repeat
 
 """
 Centerface processing utilities, copied mostly from 
@@ -18,7 +16,7 @@ https://github.com/Star-Clouds/CenterFace/blob/master/prj-python/centerface.py
 def draw_detection(img: Image, detections: list, landmarks: list):
     drawer = ImageDraw.Draw(img)
     for detection in detections:
-        boxes, score = detection[:4], detection[4]
+        boxes, _ = detection[:4], detection[4]
         drawer.rectangle([int(boxes[0]), int(boxes[1]), int(boxes[2]), int(boxes[3])])
 
     tic_size = 2
@@ -42,7 +40,6 @@ def draw_detection(img: Image, detections: list, landmarks: list):
                     center_y - tic_size,
                 ]
             )
-            # cv2.circle(frame, (int(lm[i * 2]), int(lm[i * 2 + 1])), 2, (0, 0, 255), -1)
 
 
 class CenterFaceBaseObject(object):

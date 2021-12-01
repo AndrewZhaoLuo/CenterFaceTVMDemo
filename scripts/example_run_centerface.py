@@ -2,13 +2,10 @@
 Example of running centerface models and displaying results
 """
 
-import time
-
 import numpy as np
-from numpy.testing._private.utils import break_cycles
 from PIL import Image as img
 
-import centerface_utils
+import scripts.centerface_utils as centerface_utils
 
 
 def get_image(path, target_width, target_height):

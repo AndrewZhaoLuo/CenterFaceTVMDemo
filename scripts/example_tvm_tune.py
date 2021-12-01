@@ -1,8 +1,6 @@
-import multiprocessing as mp
 from os import path
 from shutil import copyfile
 
-import numpy as np
 import tvm
 from tvm import relay
 from tvm.driver import tvmc
