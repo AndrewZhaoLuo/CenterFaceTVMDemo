@@ -13,10 +13,6 @@ from tvm import relay
 
 """Model exports from https://github.com/linghu8812/tensorrt_inference"""
 
-# Try loading into tvm
-onnx_model = onnx.load("./centerface.onnx")
-mod, params = relay.frontend.from_onnx(onnx_model, freeze_params=True)
-
 new_width = 640
 new_height = 640
 
@@ -37,20 +33,30 @@ np_image = np.expand_dims(np.array(test_image).transpose(2, 0, 1), 0)
 # preprocessing of image goes here
 np_image = (np_image / 255.0).astype("float32")
 
+# Turn off logging
+so = ort.SessionOptions()
+so.log_severity_level = 3
+
+# Centerface optimized is from centerface.onnx running onnxoptimizer
+# Example here:
+# https://github.com/AndrewZhaoLuo/TVM-Sandbox/blob/f1f9f698be2b7a8cc5bcf1167d892cd915eb7ce7/onnx/onnx_optimizer.py#L1
+session = ort.InferenceSession("centerface-optimized.onnx", sess_options=so)
+result = session.run(None, {"input.1": np_image})
+
+
+print("Benchmarking onnxruntime:")
 
 import time
 
 time_in_ms = []
-for i in range(10):
-    so = ort.SessionOptions()
-    so.log_severity_level = 3
+for i in range(100):
     session = ort.InferenceSession("centerface.onnx", sess_options=so)
 
     start = time.time()
     result = session.run(None, {"input.1": np_image})
     end = time.time()
 
-    print(result)
     time_in_ms.append((end - start) * 1000)
 
-print(time_in_ms)
+# avg_time: 61.13584756851196 ms
+print(f"avg_time: {sum(time_in_ms) / len(time_in_ms)} ms")
