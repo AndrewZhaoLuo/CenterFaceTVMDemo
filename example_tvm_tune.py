@@ -15,6 +15,26 @@ https://github.com/AndrewZhaoLuo/TVM-Sandbox/blob/bb209e8845440ed9f40af1b2580618
 
 Creates centerface autoscheduler log files, which are included in this repo so you 
 don't have to spend 24 hrs running the tuning script!
+
+Run on a 2020, 13-inch macbook pro (m1 mac)
+
+FP32:
+Processing centerface_autoscheduler_30000kt_fp32_llvm
+Execution time summary:
+ mean (ms)   median (ms)    max (ms)     min (ms)     std (ms)  
+  33.8869      33.6213      35.0154      33.1292       0.7192   
+               
+Output Names:
+ ['output_0', 'output_1', 'output_2', 'output_3']
+
+FP16:
+Processing centerface_autoscheduler_10000kt_fp16_llvm
+Execution time summary:
+ mean (ms)   median (ms)    max (ms)     min (ms)     std (ms)  
+  22.3274      22.2959      23.4356      21.7442       0.4560   
+               
+Output Names:
+ ['output_0', 'output_1', 'output_2', 'output_3']
 """
 
 
@@ -72,8 +92,6 @@ def graph_optimize(
         mod = tvm.relay.transform.FoldConstant()(mod)
         mod = tvm.relay.transform.FastMath()(mod) if fast_math else mod
 
-    print("Final relay mod:")
-    print(mod)
     return TVMCModel(mod, params)
 
 
@@ -97,6 +115,9 @@ def benchmark_model(
     tvmc_model = model_func(
         run_pass=run_fp16_pass, run_opts=run_other_opts, try_nhwc_layout=try_nhwc_layout
     )
+    print("Final relay mod:")
+    print(tvmc_model.mod)
+
     tuning_records = tvmc.tune(
         tvmc_model,
         target=target,
@@ -107,7 +128,7 @@ def benchmark_model(
         target_host=target_host,
     )
 
-    copyfile(tuning_records, f"./{name}")
+    copyfile(tuning_records, f"./{name}.log")
 
     # Create package artifacts
     package = tvmc.compile(tvmc_model, target=target, tuning_records=tuning_records)
@@ -128,15 +149,40 @@ def get_centerface(run_pass=True, run_opts=True, try_nhwc_layout=False):
     )
 
 
+def benchmark_and_compile_so_and_whl(
+    model_func,
+    name,
+    run_fp16_pass=True,
+    run_other_opts=True,
+    try_nhwc_layout=False,
+    target="llvm",
+):
+    print(f"Processing {name}")
+    tvmc_model = model_func(
+        run_pass=run_fp16_pass, run_opts=run_other_opts, try_nhwc_layout=try_nhwc_layout
+    )
+    tuning_records = f"./{name}.log"
+    package = tvmc.compile(tvmc_model, target=target, tuning_records=tuning_records)
+    result = tvmc.run(
+        package,
+        device="cpu" if "llvm" in target else target,
+        repeat=10,
+        number=100,
+    )
+    print(result)
+    print()
+    copyfile(package.package_path, f"./{name}.tar")
+
+
 if __name__ == "__main__":
     benchmark_model(
         get_centerface,
-        "centerface_autoscheduler_10000kt_fp16_llvm",
+        "centerface_autoscheduler_30000kt_fp16_llvm",
         run_fp16_pass=True,
         run_other_opts=True,
         enable_autoscheduler=True,
         try_nhwc_layout=True,
-        tuning_trials=10000,
+        tuning_trials=30000,
         target="llvm -mcpu=apple-latest -mtriple=arm64-apple-macos",
         target_host="llvm -mcpu=apple-latest -mtriple=arm64-apple-macos",
     )
@@ -150,4 +196,21 @@ if __name__ == "__main__":
         tuning_trials=30000,
         target="llvm -mcpu=apple-latest -mtriple=arm64-apple-macos",
         target_host="llvm -mcpu=apple-latest -mtriple=arm64-apple-macos",
+    )
+
+    benchmark_and_compile_so_and_whl(
+        get_centerface,
+        "centerface_autoscheduler_30000kt_fp16_llvm",
+        run_fp16_pass=True,
+        run_other_opts=True,
+        try_nhwc_layout=True,
+        target="llvm -mcpu=apple-latest -mtriple=arm64-apple-macos",
+    )
+    benchmark_and_compile_so_and_whl(
+        get_centerface,
+        "centerface_autoscheduler_30000kt_fp32_llvm",
+        run_fp16_pass=False,
+        run_other_opts=True,
+        try_nhwc_layout=True,
+        target="llvm -mcpu=apple-latest -mtriple=arm64-apple-macos",
     )
