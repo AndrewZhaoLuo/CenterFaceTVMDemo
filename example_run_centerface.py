@@ -1,8 +1,8 @@
 """
-Example of running ONNX centerface model with onnxruntime
+Example of running centerface models and displaying results
 """
 
-import tempfile
+import time
 
 import numpy as np
 from numpy.testing._private.utils import break_cycles
@@ -30,7 +30,7 @@ def get_image(path, target_width, target_height):
     return test_image
 
 
-def get_onnxrt_detection(path, target_width, target_height):
+def get_onnxrt_detection(path, target_width, target_height, threshold=0.4):
     target_width = 640
     target_height = 640
     test_image = get_image(path, target_width, target_height)
@@ -42,12 +42,36 @@ def get_onnxrt_detection(path, target_width, target_height):
     onnx_runner = centerface_utils.CenterFaceOnnx("models/centerface-optimized.onnx")
 
     detections, landmarks = onnx_runner(
-        np_image, target_height, target_width, threshold=0.5
+        np_image, target_height, target_width, threshold=threshold
     )
 
     centerface_utils.draw_detection(test_image, detections, landmarks)
     test_image.show()
 
 
+def get_tvm_detection(path, target_width, target_height, use_fp16=False, threshold=0.4):
+    target_width = 640
+    target_height = 640
+    test_image = get_image(path, target_width, target_height)
+
+    # Default array ordering is HWC, we want CHW, expand_dims to add back batch dim
+    np_image = np.expand_dims(np.array(test_image).transpose(2, 0, 1), 0)
+    np_image = np_image.astype("float32")
+
+    tvm_runner = centerface_utils.CenterFaceFP32TVM(
+        "compiled_packages/centerface_autoscheduler_30000kt_fp16_llvm.tar"
+        if use_fp16
+        else "compiled_packages/centerface_autoscheduler_30000kt_fp32_llvm.tar"
+    )
+
+    detections, landmarks = tvm_runner(
+        np_image, target_height, target_width, threshold=threshold
+    )
+    centerface_utils.draw_detection(test_image, detections, landmarks)
+    test_image.show()
+
+
 if __name__ == "__main__":
+    get_tvm_detection("crowd_of_people.jpeg", 640, 640, use_fp16=False)
+    get_tvm_detection("crowd_of_people.jpeg", 640, 640, use_fp16=True)
     get_onnxrt_detection("crowd_of_people.jpeg", 640, 640)

@@ -171,7 +171,7 @@ def benchmark_and_compile_so_and_whl(
     )
     print(result)
     print()
-    copyfile(package.package_path, f"./{name}.tar")
+    copyfile(package.package_path, f"compiled_packages/{name}.tar")
 
 
 if __name__ == "__main__":

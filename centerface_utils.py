@@ -4,6 +4,9 @@ from typing import Tuple
 import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageDraw
+from tvm.driver import tvmc
+from tvm.driver.tvmc.model import TVMCPackage
+from tvm.relay.op.transform import repeat
 
 """
 Centerface processing utilities, copied mostly from 
@@ -186,4 +189,30 @@ class CenterFaceOnnx(CenterFaceBaseObject):
     def inference(self, img: np.array, threshold: float) -> list:
         result = self.session.run(None, {"input.1": img})
         heatmap, scale, offset, lms = result
+        return self.postprocess(heatmap, lms, offset, scale, threshold)
+
+
+class CenterFaceFP32TVM(CenterFaceBaseObject):
+    def __init__(self, package_path="centerface_autoscheduler_30000kt_fp32_llvm.tar"):
+        self.package = TVMCPackage(package_path)
+
+    def inference(self, img: np.array, threshold: float) -> list:
+        result = tvmc.run(
+            self.package, "cpu", repeat=1, number=1, inputs={"input.1": img}
+        )
+        outputs = result.outputs
+        heatmap, scale, offset, lms = [outputs[f"output_{i}"] for i in range(4)]
+        return self.postprocess(heatmap, lms, offset, scale, threshold)
+
+
+class CenterFaceFP32TVM(CenterFaceBaseObject):
+    def __init__(self, package_path="centerface_autoscheduler_30000kt_fp16_llvm.tar"):
+        self.package = TVMCPackage(package_path)
+
+    def inference(self, img: np.array, threshold: float) -> list:
+        result = tvmc.run(
+            self.package, "cpu", repeat=1, number=1, inputs={"input.1": img}
+        )
+        outputs = result.outputs
+        heatmap, scale, offset, lms = [outputs[f"output_{i}"] for i in range(4)]
         return self.postprocess(heatmap, lms, offset, scale, threshold)
