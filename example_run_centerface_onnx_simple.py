@@ -15,7 +15,7 @@ if __name__ == "__main__":
     new_width = 640
     new_height = 640
 
-    test_image = img.open("./crowd_of_people.jpeg")
+    test_image = img.open("crowd_of_people.jpeg")
     width, height = test_image.size  # Get dimensions
 
     left = (width - new_width) / 2
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     so = ort.SessionOptions()
     so.log_severity_level = 3
 
-    session = ort.InferenceSession("centerface-optimized.onnx", sess_options=so)
+    session = ort.InferenceSession("models/centerface-optimized.onnx", sess_options=so)
     result = session.run(None, {"input.1": np_image})
 
     print("Benchmarking onnxruntime:")
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     time_in_ms = []
     for i in range(100):
-        session = ort.InferenceSession("centerface.onnx", sess_options=so)
+        session = ort.InferenceSession("models/centerface.onnx", sess_options=so)
 
         start = time.time()
         result = session.run(None, {"input.1": np_image})

@@ -39,7 +39,7 @@ Output Names:
 
 
 def load_model(name, **kwargs):
-    return tvmc.load(path.join("./", name), **kwargs)
+    return tvmc.load(path.join("models", name), **kwargs)
 
 
 def graph_optimize(
@@ -128,7 +128,7 @@ def benchmark_model(
         target_host=target_host,
     )
 
-    copyfile(tuning_records, f"./{name}.log")
+    copyfile(tuning_records, f"tuning_logs/{name}.log")
 
     # Create package artifacts
     package = tvmc.compile(tvmc_model, target=target, tuning_records=tuning_records)
@@ -161,7 +161,7 @@ def benchmark_and_compile_so_and_whl(
     tvmc_model = model_func(
         run_pass=run_fp16_pass, run_opts=run_other_opts, try_nhwc_layout=try_nhwc_layout
     )
-    tuning_records = f"./{name}.log"
+    tuning_records = f"tuning_logs/{name}.log"
     package = tvmc.compile(tvmc_model, target=target, tuning_records=tuning_records)
     result = tvmc.run(
         package,
