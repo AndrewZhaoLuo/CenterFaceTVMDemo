@@ -174,7 +174,7 @@ class CenterFaceBaseObject(object):
         return keep
 
 
-class CenterFaceBaseObjectOnnx(CenterFaceBaseObject):
+class CenterFaceOnnx(CenterFaceBaseObject):
     def __init__(self, model_path: str):
         self.img_h_new, self.img_w_new, self.scale_h, self.scale_w = 0, 0, 0, 0
 

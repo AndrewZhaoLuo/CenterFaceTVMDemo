@@ -39,9 +39,7 @@ def get_onnxrt_detection(path, target_width, target_height):
     np_image = np.expand_dims(np.array(test_image).transpose(2, 0, 1), 0)
     np_image = np_image.astype("float32")
 
-    onnx_runner = centerface_utils.CenterFaceBaseObjectOnnx(
-        "models/centerface-optimized.onnx"
-    )
+    onnx_runner = centerface_utils.CenterFaceOnnx("models/centerface-optimized.onnx")
 
     detections, landmarks = onnx_runner(
         np_image, target_height, target_width, threshold=0.5
