@@ -8,6 +8,7 @@ from scripts import centerface_utils
 
 TARGET_WIDTH = 640
 TARGET_HEIGHT = 640
+TARGET_FPS = 30
 
 
 class CameraDemo:
@@ -19,9 +20,14 @@ class CameraDemo:
 
     def capture_frame(self, cap, queue):
         """Thread calsl function which captures data from webcam and places into queue"""
+        prev = 0
+        cur = 0
         while self.keep_going:
+            cur = time.time()
             _, img = cap.read()
-            queue.put(img)
+            if (cur - prev) >= 1.0 / TARGET_FPS:
+                prev = cur
+                queue.put(img)
 
     def process_frame(
         self, runner, processing_func, input_queue, output_queue, threshold
@@ -71,7 +77,7 @@ class CameraDemo:
 
         cap_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        cap.set(cv2.CAP_PROP_FPS, 60)
+        cap.set(cv2.CAP_PROP_FPS, 20)
         cap_fps = cap.get(cv2.CAP_PROP_FPS)
         print("* Capture width:", cap_width)
         print("* Capture height:", cap_height)
@@ -92,13 +98,13 @@ class CameraDemo:
         bottom = (new_height + TARGET_HEIGHT) // 2
 
         # initial queue for webcam data
-        frames_queue = queue.Queue(maxsize=100)
+        frames_queue = queue.Queue(maxsize=0)
 
         # queue after we've streamed it to real-time feed
-        ready_for_processing_queue = queue.Queue(maxsize=100)
+        ready_for_processing_queue = queue.Queue(maxsize=0)
 
         # queue for processed frames with prediction overlays
-        processed_frames_queue = queue.Queue(maxsize=100)
+        processed_frames_queue = queue.Queue(maxsize=0)
 
         # start thread to capture data from webcam
         capture_thread = Thread(
