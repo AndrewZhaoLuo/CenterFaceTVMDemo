@@ -214,3 +214,10 @@ class CenterFaceTVM(CenterFaceBaseObject):
             for i in range(self.module.get_num_outputs())
         ]
         return self.postprocess(heatmap, lms, offset, scale, threshold)
+
+
+class CenterFaceNoDetection(CenterFaceBaseObject):
+    def inference(self, img: np.array, threshold: float) -> list:
+        dets = np.empty(shape=[0, 5], dtype=np.float32)
+        lms = np.empty(shape=[0, 10], dtype=np.float32)
+        return dets, lms
