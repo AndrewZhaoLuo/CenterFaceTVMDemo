@@ -3,6 +3,8 @@ from typing import Tuple
 import numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageDraw
+from tvm import rpc
+from tvm.contrib import graph_executor as runtime
 from tvm.driver import tvmc
 from tvm.driver.tvmc.model import TVMCPackage
 
@@ -189,27 +191,26 @@ class CenterFaceOnnx(CenterFaceBaseObject):
         return self.postprocess(heatmap, lms, offset, scale, threshold)
 
 
-class CenterFaceFP32TVM(CenterFaceBaseObject):
-    def __init__(self, package_path="centerface_autoscheduler_30000kt_fp32_llvm.tar"):
-        self.package = TVMCPackage(package_path)
+class CenterFaceTVM(CenterFaceBaseObject):
+    def __init__(
+        self,
+        package_path="compiled_packages/centerface_autoscheduler_30000kt_fp32_llvm.tar",
+    ):
+        session = rpc.LocalSession()
+        package = TVMCPackage(package_path)
+        session.upload(package.lib_path)
+        lib = session.load_module(package.lib_name)
+        dev = session.cpu()
+
+        self.module = runtime.create(package.graph, lib, dev)
+        self.module.load_params(package.params)
 
     def inference(self, img: np.array, threshold: float) -> list:
-        result = tvmc.run(
-            self.package, "cpu", repeat=1, number=1, inputs={"input.1": img}
-        )
-        outputs = result.outputs
-        heatmap, scale, offset, lms = [outputs[f"output_{i}"] for i in range(4)]
-        return self.postprocess(heatmap, lms, offset, scale, threshold)
-
-
-class CenterFaceFP32TVM(CenterFaceBaseObject):
-    def __init__(self, package_path="centerface_autoscheduler_30000kt_fp16_llvm.tar"):
-        self.package = TVMCPackage(package_path)
-
-    def inference(self, img: np.array, threshold: float) -> list:
-        result = tvmc.run(
-            self.package, "cpu", repeat=1, number=1, inputs={"input.1": img}
-        )
-        outputs = result.outputs
-        heatmap, scale, offset, lms = [outputs[f"output_{i}"] for i in range(4)]
+        input_dict = {"input.1": img}
+        self.module.set_input(**input_dict)
+        self.module.run()
+        heatmap, scale, offset, lms = [
+            self.module.get_output(i).numpy()
+            for i in range(self.module.get_num_outputs())
+        ]
         return self.postprocess(heatmap, lms, offset, scale, threshold)

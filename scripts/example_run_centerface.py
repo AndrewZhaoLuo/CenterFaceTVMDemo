@@ -54,13 +54,11 @@ def get_tvm_detection(path, target_width, target_height, use_fp16=False, thresho
     # Default array ordering is HWC, we want CHW, expand_dims to add back batch dim
     np_image = np.expand_dims(np.array(test_image).transpose(2, 0, 1), 0)
     np_image = np_image.astype("float32")
-
-    tvm_runner = centerface_utils.CenterFaceFP32TVM(
-        "compiled_packages/centerface_autoscheduler_30000kt_fp16_llvm.tar"
+    tvm_runner = centerface_utils.CenterFaceTVM(
+        package_path="compiled_packages/centerface_autoscheduler_30000kt_fp16_llvm.tar"
         if use_fp16
         else "compiled_packages/centerface_autoscheduler_30000kt_fp32_llvm.tar"
     )
-
     detections, landmarks = tvm_runner(
         np_image, target_height, target_width, threshold=threshold
     )
