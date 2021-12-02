@@ -2,6 +2,8 @@
 Example of running centerface models and displaying results
 """
 
+import time
+
 import numpy as np
 from PIL import Image as img
 
@@ -38,9 +40,11 @@ def get_onnxrt_detection(path, target_width, target_height, threshold=0.4):
 
     onnx_runner = centerface_utils.CenterFaceOnnx("models/centerface-optimized.onnx")
 
+    start = time.time()
     detections, landmarks = onnx_runner(
         np_image, target_height, target_width, threshold=threshold
     )
+    print(time.time() - start)
 
     centerface_utils.draw_detection(test_image, detections, landmarks)
     test_image.show()
@@ -59,9 +63,13 @@ def get_tvm_detection(path, target_width, target_height, use_fp16=False, thresho
         if use_fp16
         else "compiled_packages/centerface_autoscheduler_30000kt_fp32_llvm.tar"
     )
+
+    start = time.time()
     detections, landmarks = tvm_runner(
         np_image, target_height, target_width, threshold=threshold
     )
+    print(time.time() - start)
+
     centerface_utils.draw_detection(test_image, detections, landmarks)
     test_image.show()
 
