@@ -144,7 +144,7 @@ class CameraDemo:
                     cv2.imshow("predicted", img_processed)
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
-                keep_going = False
+                self.keep_going = False
                 break
 
         cap.release()
@@ -164,4 +164,5 @@ if __name__ == "__main__":
 
     # Change runners at will
     demo = CameraDemo(tvm_runner_fp16)
+
     demo.run()
