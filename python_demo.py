@@ -19,7 +19,7 @@ class CameraDemo:
         self.runner = runner
 
     def capture_frame(self, cap, queue):
-        """Thread calsl function which captures data from webcam and places into queue"""
+        """Thread function which captures data from webcam and places into queue"""
         prev = 0
         cur = 0
         while self.keep_going:
@@ -32,7 +32,7 @@ class CameraDemo:
     def process_frame(
         self, runner, processing_func, input_queue, output_queue, threshold
     ):
-        """Thread which detections and overlays results, add it to queue for rendering"""
+        """Thread function which detects and overlays results, add it to queue for rendering"""
         while self.keep_going:
             if input_queue.empty():
                 continue
