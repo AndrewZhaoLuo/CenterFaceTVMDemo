@@ -77,7 +77,10 @@ class CameraDemo:
 
         cap_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
         cap_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        cap.set(cv2.CAP_PROP_FPS, 20)
+
+        # Doesn't seem to do anything :/
+        # cap.set(cv2.CAP_PROP_FPS, TARGET_FPS)
+
         cap_fps = cap.get(cv2.CAP_PROP_FPS)
         print("* Capture width:", cap_width)
         print("* Capture height:", cap_height)
