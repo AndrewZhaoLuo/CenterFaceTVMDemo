@@ -1,5 +1,7 @@
+![DemoClip](https://user-images.githubusercontent.com/13855451/145470544-cf91c00e-0f6c-4c76-bddd-f8493fdc8fb6.gif)
+
 # CenterFaceTVMDemo
-A demo for using CenterFace in TVM.
+A demo for using and deploying CenterFace model using TVM.
 
 TVM commit used: 18c88789a70489d6615234f25bcc4f29e9dd83dc
 
